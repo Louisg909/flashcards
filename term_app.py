@@ -96,6 +96,10 @@ class Stack:
     def remove_card(self,card):
         return
 
+    def forgotten_date():
+        # get weights of all of the cards in the stack - as 
+        return
+
 
 
 
