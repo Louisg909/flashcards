@@ -13,3 +13,10 @@
 ## Plans for future versions:
 - Flask implementation, with interactive cards, and fun design that doesn't take away from the content, but gives it a more engaging feel.
 - Adding extra features for learning concepts, rather than just vocabluary.
+- Ability to share flashcards across users, and users having a learnability score which determines how quicky they learn, these two numbers are optimised to ensure everyone who learns from the cards gets around 80% retention on the learning curve.
+- Card complexities and learning curves could be determined by neural networks maybe? Not sure [^1](2.4)
+
+
+[^1]: https://api.repository.cam.ac.uk/server/api/core/bitstreams/9e418506-e95e-442f-b8ea-739ed0679179/content
+
+

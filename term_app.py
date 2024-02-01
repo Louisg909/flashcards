@@ -87,8 +87,8 @@ class Stack:
             card.study(correct)
 
         self.cards.sort()
-        self.next_test = self.cards[:10]
-
+#        self.next_test = self.cards[:10] # get cards that are 80% chance of retention or bellow, and sort from lowest percentage to highest
+#
         # display them one at a time
         for card in today:
             test(card)
