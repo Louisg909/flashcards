@@ -39,27 +39,40 @@ Once the learning curve is calculated, the testing should occur at 80% probabili
 
 ### Basically I want the following:
 
-| User |
-| ---- |
-| - `user_data : Dict` <br> - `user_ability : Double` <br> - `stacks : List` |
-| - `test_stack(stack:String)->Void` | 
-
-| Card |
-| ----- |
-| - `tests : Dict` <br> - `complexity : Double` <br> - `curve_weights` |
-| - `set_tests()->Void` <br> - `test()` <br> - `study(correct:Bool)->Void` |
-
-
-| Stack |
-| ------ |
-| - `name : String` <br> - `cards : List[Card]` <br> - `confidence : Double` <br> - `size : Int` |
-| - `add_card(card:Card)->Void` <br> - `remove_card(card:String)->Void` <br> - `test()->Void` |
+<table>
+<tr><td>
+<table>
+<tr><th>User</th></tr>
+<tr><td>- <code>user_data : Dict</code> <br> - <code>user_ability : Double</code> <br> - <code>stacks : List</code> </td></tr>
+<tr><td> - <code>test_stack(stack:String)->Void </code></td></tr>
+</table>
+</td><td>
+<table>
+<tr><th>Card</th></tr>
+<tr><td> - <code>tests : Dict</code> <br> - <code>complexity : Double</code> <br> - <code>curve_weights</code> </td></tr>
+<tr><td> - <code>set_tests()->Void</code> <br> - <code>test()</code> <br> - <code>study(correct:Bool)->Void</code> <br> - <code>get_retention()->Double</code></td></tr>
+</table>
+</td><td>
+<table>
+<tr><th>Stack</th></tr>
+<tr><td> - <code>name : String</code> <br> - <code>cards : List[Card]</code> <br> - <code>confidence : Double</code> <br> - <code>size : Int</code> </td></tr>
+<tr><td> - <code>add_card(card:Card)->Void </code> <br> - <code>remove_card(card:String)->Void</code> <br> - <code>test()->Void</code> <br> - <code> forgotten_date()->Int </td></tr>
+</table>
+</td></tr>
+</table>
 
 
 > Notes about attributes and methods:
 > - `Card.tests` includes all three of the testing methods: *Multiple Choice*, *Generation*, and *Recall*.
 > - `Stack.confidence` could be a confidence score, or I just had an idea to have it as how many days it would take for the average curve of all the cards in the stack to go bellow a certain percentage (aka, be forgotten)
-> - `Stack.test()` looks through all of the cards in the stack and compiles a list of the ones that have a probability of retention for that day of 80% or less, and then sorts them by this retention percentage, testing the user for the cards with the least retention probability, reajusting each of their curves based off of whether they were answered correctly or not. After testing, can update the stack confidence? 
+> - `Stack.test()` looks through all of the cards in the stack and compiles a queue of the ones that have a probability of retention for that day of 80% or less, and then sorts them by this retention percentage, testing the user for the cards with the least retention probability, reajusting each of their curves based off of whether they were answered correctly or not. After testing, can update the stack confidence? If a card is marked as wrong, it gets moved to the back of the queue, and the count of how many times it went wrong for that one test gets increased by 1. This continues untill the current testing queue is empty.
+> - `Stack.forgotten_date()` takes all the forgetting curve dates of the cards in the stack, and uses this to say when the retention percentage of the stack goes bellow a certain percentage - can be arbitarily set to something like 5% for now.
+
+The todo list to achieve this is:
+- [ ] Work out how to add weights to forgetting curve
+- [ ] Find out and impliment how these weights are updated upon recall, based off of the previous weightings, the date, and how many incorrect responses on the reacll (0 means got it right first time).
+- [ ] Write `Card.get_retention()` function to get rentention probability percentage at a given date/today
+- [ ] Write `Stack.forgotten_date()` to find when the stack will be 'forgotten'
 
 
 ### Problems with this method
