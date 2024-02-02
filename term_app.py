@@ -1,29 +1,34 @@
 import pickle
 import os
 from datetime import datetime
+from math import exp
+from random import shuffle
+
+from term_card_display import test as term_test
+from datatypes import Queue
 
 def current_date():
     return (datetime.now().date() - datetime(1970, 1, 1).date()).days
 
 
 class Card:
-    def __init__(self, title, definition, id_no):
+    def __init__(self, title, difficulty, testing_attributes = None):
         today = current_date()
+        self.halflife = difficulty
         self.title = title
-        self.definition = definition
-        self.confidence = 0 # condidence changes how difficult the question is - from picking an option for the blank, to blank generation, to resiting definitions
+        # self.confidence = 0 # condidence changes how difficult the question is - from picking an option for the blank, to blank generation, to resiting definitions <--- redundant currently, but want to add later
         self.last_studied = None
-        self.due = today
-        self.generate = None
-        self.question = None
-        self.options = None
+        self.today_retention = None
+        self.testing_attributes = {} if testing_attributes == None else testing_attributes # {'multi':['question',{'choices':correct:bool}],'gen':['text1','generate','text2'],'res':['title','definition']}
 
     def set_multi(self, question: str, options: dict)-> None:
-        self.question = question
-        self.options = options # options = [{'question':'option1', 'corect':False}, {'question':'option2', 'correct':True},...]
+        self.testing_attributes['multi'] = [question, options]
 
-    def set_generation(self, q1, h1, q2):
-        self.generation = {q1, h1, q2}
+    def set_generation(self, text1, generate, text2):
+        self.testing_attributes['gen'] = [text1, generate, text2]
+
+    def set_res(self, title, definition):
+        self.testing_attributes['res'] = [title, definition]
 
     def __repr__(self):
         return self.title
@@ -51,8 +56,15 @@ class Card:
             # type = resitation
             return 'res', self.title, self.definition
 
+    def get_retention(self, ability : float, date : datetime.date = None):
+        today = datetime.today()
+        t = (today - self.last_studied).days
+        x = (date - today).days if date != None else 0
+        retention = exp(-(x+t)/(ability * self.halflife))
+        if date == None:
+            self.today_retention = retention
+        return retention
 
-# 789461086002:
 
 class Stack:
     def __init__(self,name):
@@ -66,32 +78,32 @@ class Stack:
         self.cards.append(Card(title, definition, self.size))
         self.size += 1
 
-    def test_today(self):
-        def test(card):
-            card_type, x, y = card.get_card()
-            # display card and check if correct or wrong
-            if card_type == 'multi':
-                # display card as multi with the question and render template
-                print(f'\n\nCard:\n{x}')
-                # randomise option order
-                random.shuffle(y)
-                for n in range(len(y)):
-                    print(f'{n+1} ... {y[n]}') # In flask, each of these will be submit fields? Or multiple choice selection - radio type?
-                option = int(input('\nEnter choice:'))
+    def test_today(self, ability):
 
-            elif card_type == 'gen':
-                pass
-            else:
-                pass
-            correct : bool = True
+        # get list of every card in stack that has a retention today that is less or equal to 0.8
+        today = datetime.today()
+        cards_testing = [card for card in self.cards if card.get_retention()<=0.8]
+        cards_testing.sort(key=lambda x : x.today_retention)
+        cards_testing = cards_testing[10:]
+        shuffle(cards_testing)
+        # create study queue
+        study_queue = Queue()
+        [study_queue.enqueue(card) for card in card_testing]
+
+        progress = 0
+        while not study_queue.isEmpty():
+            progress += 1
+            print(f'{progress}/{study_queue.length}')
+            # get card from queue
+            card = study_queue.dequeue()
+            # test card
+            correct = term_test(card)
             card.study(correct)
+            if not correct:
+                # put to back of queue
+                study_queue.enqueue(card)
+                progress -= 1
 
-        self.cards.sort()
-#        self.next_test = self.cards[:10] # get cards that are 80% chance of retention or bellow, and sort from lowest percentage to highest
-#
-        # display them one at a time
-        for card in today:
-            test(card)
 
     def remove_card(self,card):
         return
@@ -119,7 +131,8 @@ class User:
 
     def test(self, stack_name): # maybe better way to choose which stack to use? Not sure
         # get list of cards that need to be tested
-        test = self.stacks[stack_name].
+        # test = self.stacks[stack_name].
+        return
 
     def save(self):
         os.makedirs('/userdata', exist_ok=True)  # Create directory if it doesn't exist

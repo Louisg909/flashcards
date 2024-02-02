@@ -149,6 +149,36 @@ class User:
 After testing, these give very weird values so will need to look back on them.
 
 
+#### Writing `Card.get_retention()`
+##### Aim of function
+This function is to get rentention probability at a given date/today. I think, for now at least, it will take an input of a datetime date and will output the retention probability.
+| Card |
+| ---- |
+| - `get_retention(date : datetime.date)-> retention : float` |
+
+##### Logic and coding
+This just takes into account the one equation's forgetting curve, so only has to work with a few weights so will be quite efficent. The weights are defined to make the equation:
+```math
+p(x) = e^{-\frac{x+t_{n}}{k\ h_{n}}}
+```
+And these are all values stored, so this can easily just be evaluated:
+```python
+from math import exp
+from datetime import datetime, timedelta
+
+class Card:
+    def __init__(self, hl, daysago):
+        self.halflife = hl
+        self.last_studied = datetime.today() - timedelta(days=daysago) # just for testing
+    
+    def get_retention(self, date : datetime.date, ability : float):
+        today = datetime.today()
+        t = (today - self.last_studied).days
+        x = (date - today).days
+        return exp(-(x+t)/(ability * self.halflife))
+```
+
+
 #### Updating the weightings of the forgetting curve
 
 

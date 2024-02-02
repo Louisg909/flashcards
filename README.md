@@ -1,3 +1,4 @@
+[Click here to see the current idea for the webapp design](https://www.figma.com/file/4EOdSLQeaRIDy3VujRwakp/StackCardsPro?type=design&node-id=0%3A1&mode=design&t=WbPtL94havrfWiLW-1)
 
 # Version history and plans
 ## Current Version
@@ -15,6 +16,7 @@
 - Adding extra features for learning concepts, rather than just vocabluary.
 - Ability to share flashcards across users, and users having a learnability score which determines how quicky they learn, these two numbers are optimised to ensure everyone who learns from the cards gets around 80% retention on the learning curve.
 - Card complexities and learning curves could be determined by neural networks maybe? Not sure [^1](2.4)
+- I think it would be cool to have compatability to Octavian's note app if possible - where the cards can be attatched to the notes so you can re-read your notes when you strugle or feel you have lost some content for the flash cards - also makes the flash cards more grounded in content.
 
 # Todo
 - [ ] Work out how to add weights to forgetting curve
