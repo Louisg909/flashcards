@@ -99,7 +99,7 @@ c=\frac{\sum y-m\sum x}{N}
 ```
 We can then rearrange the equation to get $x=\frac{1}{m}\left(\ln\left(P(x)\right)-c\right)$, and $P(x)$ can be substituted with the value of $0.05$, where the equation will give an estimate of x. This value can then be put through the original equation to see how close it is. If it is within the boundaries of $\pm 0.01$, we will keep it as the value. If not, I will continue on with the method by
 
-To efficiently find the value of 0.05, I could use the Newton-Raphson method. To do this, I would need to use the derivative of the stack's retention function:
+For now, I think this is more than good enough - later on down the line, I might find that, to efficiently find the value of 0.05, I should use the Newton-Raphson method. To do this, I would need to use the derivative of the stack's retention function:
 ```math
 P'\left(x\right)=-\frac{1}{N}\sum_{n=0}^{N}\left(\frac{1}{kh_{n}}e^{-\frac{x+t_{n}}{kh_{n}}}\right)
 ```
@@ -139,13 +139,14 @@ class Stack:
 
 ```python
 class User:
-    # self.stacks : list[dict['name':str, 'stack':Stack, 'halflifes':float]]
     self.ability : float
+    self.stacks : dict['stack_name':Stack]
 
     def forget_stack(self, stack_name:str):
         return self.stacks[stack_name].forget(self.ability)
-
 ```
+
+After testing, these give very weird values so will need to look back on them.
 
 
 #### Updating the weightings of the forgetting curve
