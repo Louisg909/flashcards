@@ -110,7 +110,7 @@ To impliment this into code, I first will ensure the `Card` class has all the co
 from datetime import date
 class Card:
     self.halflife : float = 0.2 # intialised at some value based off of predicted difficulty
-    self.date_last_tested : date = 23145
+    self.date_last_tested : date
     
     def days_since_tested(self):
         return (date.today()-self.date_last_tested).days
