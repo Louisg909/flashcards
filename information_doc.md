@@ -32,10 +32,10 @@ In practice, it is found that optimising for $p$ and $h$ in the loss function im
 Problem with normal methods is they aren't adaptive, I have looked at a paper to learn about other methods:
 
 ### Adaptive Forgetting Curves for Spaced Repetition Language Learning
-It is proven that more complex words and concepts are forgotten faster on the learning curve. Rather than coding something that determines the learning curve weights for each flashcard / flashcard difficulty, I can code a way for them to addapt. if I pad out this application to be larger, with flashcard sharing, These difficulty weightings can be attatched to the flashcards, as well as the addition of a user learning ability score, which is used in conjunction with the flashcard's complexity score to determine the learning curve for that user on that card. The more the flashcard is used, the complexity can be adjusted. This can be simplified when implemented to not continuously updated and adjusted when is relativty consitent. Could even have an option to input predicted complexity when first entering flashcards to give a better initial indication of the flashcard's complexity.
+It is proven that more complex words and concepts are forgotten faster on the forgetting curve. Rather than coding something that determines the forgetting curve weights for each flashcard / flashcard difficulty, I can code a way for them to addapt. if I pad out this application to be larger, with flashcard sharing, These difficulty weightings can be attatched to the flashcards, as well as the addition of a user learning ability score, which is used in conjunction with the flashcard's complexity score to determine the forgetting curve for that user on that card. The more the flashcard is used, the complexity can be adjusted. This can be simplified when implemented to not continuously updated and adjusted when is relativty consitent. Could even have an option to input predicted complexity when first entering flashcards to give a better initial indication of the flashcard's complexity.
 
-### How does the learning curve adapt upon relearning?
-Once the learning curve is calculated, the testing should occur at 80% probabiliyu of retention, with the correctness determining the next iteration of the learning curve. The curve weightings for each user for each card should probably be saved, as this can determine how urgantly the card needs to be revised. For example, if you have a card that is set to review every 2 years, and it is late for 3 days, and a card you are set to review every day is late by 2 days, going by urgancy from due dates would favour the 2 year review, but the learning curve of the daily card would be steaper, and therefore more important to review.
+### How does the forgetting curve adapt upon relearning?
+Once the forgetting curve is calculated, the testing should occur at 80% probabiliyu of retention, with the correctness determining the next iteration of the forgetting curve. The curve weightings for each user for each card should probably be saved, as this can determine how urgantly the card needs to be revised. For example, if you have a card that is set to review every 2 years, and it is late for 3 days, and a card you are set to review every day is late by 2 days, going by urgancy from due dates would favour the 2 year review, but the forgetting curve of the daily card would be steaper, and therefore more important to review.
 
 ### Basically I want the following:
 
@@ -73,6 +73,81 @@ The todo list to achieve this is:
 - [ ] Find out and impliment how these weights are updated upon recall, based off of the previous weightings, the date, and how many incorrect responses on the reacll (0 means got it right first time).
 - [ ] Write `Card.get_retention()` function to get rentention probability percentage at a given date/today
 - [ ] Write `Stack.forgotten_date()` to find when the stack will be 'forgotten'
+
+#### Writing `Card.get_retention()`
+##### Maths
+With a retention probabilty for a card of $p\left(x,h\right)=e^{-\frac{x}{kh}}$, where $x$ is days into the future, $h$ is the knowledge half-life (which is what gets addapted the more a person learns it), and $k$ is the user's ability.
+
+The curves for each card are defined by $p\left(x+t,h\right)$, where $h$ is the current knowledge half-life of the card, and $t$ is the time since the card was last studied.
+
+The curve for the full stack can be worked out with the function:
+```math
+P\left(t\right)=\sum_{n=0}^{N}\left(e^{-\frac{t_{n}}{kh_{n}}}\right)
+```
+Where $N$ is the number of cards in the stack.
+
+To most efficiently find the value of 0.05, I could use the Newton-Raphson method. To do this, I would need to use the derivative of the stack's retention function:
+```math
+P'\left(x\right)=-\frac{1}{N}\sum_{n=0}^{N}\left(\frac{1}{kh_{n}}e^{-\frac{x+t_{n}}{kh_{n}}}\right)
+```
+Next, I want a good estimated value. To do this, I can do some linear regression on the logarithmic scale as the function of P(t) is based of expotentials and will roughly match it. To do this, I will find the values of $$\ln\left(P(-1)\right)$, $$\ln\left(P(0)\right)$, $$\ln\left(P(7)\right)$, and $\ln\left(P(30)\right)$. I will then will take a simple linear regression:
+```math
+\ln\left(P(x)\right)~mx+c
+```
+and:
+```math
+m=\frac{N\sum xy-\left(\sum x\right)\left(\sum y\right)}{N\sum x^{2}-\left(\sum x\right)^{2}}m=\frac{N\sum xy-\left(\sum x\right)\left(\sum y\right)}{N\sum x^{2}-\left(\sum x\right)^{2}}
+```
+```math
+c=\frac{\sum y-m\sum x}{N}
+```
+We can then rearrange the equation to get $x=\frac{1}{m}\left(\ln\left(P(x)\right)-c\right)$, and $P(x)$ can be substituted with the value of $0.05$, where the equation will give an estimate of x. This value can then be put through the original equation to see how close it is. If it is within the boundaries of $\pm 0.01$, we will keep it as the value. If not, I will continue on with the method by
+
+##### Coding
+To impliment this into code, I first will ensure the `Card` class has all the correct weightings for the forgetting curve:
+```python
+from datetime import date
+class Card:
+    self.halflife : float = 0.2 # intialised at some value based off of predicted difficulty
+    self.date_last_tested : date = 23145
+    
+    def days_since_tested(self):
+        return (date.today()-self.date_last_tested).days
+```
+Then this can be used, in the `Stack` class, to make the regression estimate:
+```python
+import math
+
+class Stack:
+    self.cards : list[Cards]
+
+    def forget_regression_estimate(self, ability):
+        # initialise the x values, and find their y values
+        lnPn = lambda cards, x: sum(math.e**(-(x+card.days_since_tested())/(ability*card.halflife)) for card in cards) / len(cards)
+        x1 = [-1, 0, 7, 30]
+        y1 = [lnPn(x) for x in x1]
+        xy = sum(x1[n]*y1[n] for n in range(4))
+
+        # linear regression on these values:
+        m = ( 4*xy-sum(x1)*sum(y1) )/( 4*sum(x**2 for x in x1)-sum(x)**2 )
+        c = (sum(y1) - m*sum(x1))/4
+
+        # finding x when P(x)~0.01
+        return (1/m) * (math.ln(0.01)-c)
+```
+
+```python
+class User:
+    # self.stacks : list[dict['name':str, 'stack':Stack, 'halflifes':float]]
+    self.ability : float
+
+    def forget_stack(self, stack_name:str):
+        return self.stacks[stack_name].forget(self.ability)
+
+```
+
+
+#### Updating the weightings of the forgetting curve
 
 
 ### Problems with this method
