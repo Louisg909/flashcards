@@ -86,22 +86,23 @@ P\left(t\right)=\sum_{n=0}^{N}\left(e^{-\frac{t_{n}}{kh_{n}}}\right)
 ```
 Where $N$ is the number of cards in the stack.
 
-To most efficiently find the value of 0.05, I could use the Newton-Raphson method. To do this, I would need to use the derivative of the stack's retention function:
-```math
-P'\left(x\right)=-\frac{1}{N}\sum_{n=0}^{N}\left(\frac{1}{kh_{n}}e^{-\frac{x+t_{n}}{kh_{n}}}\right)
-```
-Next, I want a good estimated value. To do this, I can do some linear regression on the logarithmic scale as the function of P(t) is based of expotentials and will roughly match it. To do this, I will find the values of $$\ln\left(P(-1)\right)$, $$\ln\left(P(0)\right)$, $$\ln\left(P(7)\right)$, and $\ln\left(P(30)\right)$. I will then will take a simple linear regression:
+I want a good estimated value. To do this, I can do some linear regression on the logarithmic scale as the function of P(t) is based of expotentials and will roughly match it. To do this, I will find the values of $$\ln\left(P(-1)\right)$, $$\ln\left(P(0)\right)$, $$\ln\left(P(7)\right)$, and $\ln\left(P(30)\right)$. I will then will take a simple linear regression:
 ```math
 \ln\left(P(x)\right)~mx+c
 ```
 and:
 ```math
-m=\frac{N\sum xy-\left(\sum x\right)\left(\sum y\right)}{N\sum x^{2}-\left(\sum x\right)^{2}}m=\frac{N\sum xy-\left(\sum x\right)\left(\sum y\right)}{N\sum x^{2}-\left(\sum x\right)^{2}}
+m=\frac{N\sum xy-\left(\sum x\right)\left(\sum y\right)}{N\sum x^{2}-\left(\sum x\right)^{2}}
 ```
 ```math
 c=\frac{\sum y-m\sum x}{N}
 ```
 We can then rearrange the equation to get $x=\frac{1}{m}\left(\ln\left(P(x)\right)-c\right)$, and $P(x)$ can be substituted with the value of $0.05$, where the equation will give an estimate of x. This value can then be put through the original equation to see how close it is. If it is within the boundaries of $\pm 0.01$, we will keep it as the value. If not, I will continue on with the method by
+
+To efficiently find the value of 0.05, I could use the Newton-Raphson method. To do this, I would need to use the derivative of the stack's retention function:
+```math
+P'\left(x\right)=-\frac{1}{N}\sum_{n=0}^{N}\left(\frac{1}{kh_{n}}e^{-\frac{x+t_{n}}{kh_{n}}}\right)
+```
 
 ##### Coding
 To impliment this into code, I first will ensure the `Card` class has all the correct weightings for the forgetting curve:
@@ -119,7 +120,7 @@ Then this can be used, in the `Stack` class, to make the regression estimate:
 import math
 
 class Stack:
-    self.cards : list[Cards]
+    self.cards : list[Card]
 
     def forget_regression_estimate(self, ability):
         # initialise the x values, and find their y values
